@@ -3,5 +3,8 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: "./", // чтобы сборка жила под /pizza-kalkulyator/
+  base: "/", // абсолютные пути, чтобы ассеты корректно грузились под nginx и в Telegram WebApp
+  build: {
+    outDir: "dist",
+  },
 });
