@@ -1,126 +1,108 @@
 <!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="light dark" />
-  <title>TG WebApp — Test</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#F3F4F6" />
+    <title>PizzaCalc</title>
 
-  <!-- Telegram Mini App SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Telegram Mini App SDK (без него в обычном браузере всё тоже работает) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <style>
-    :root {
-      --tg-bg: #f3f4f6;
-      --tg-text: #1f2937;
-      --ok: #16a34a;
-      --bad: #ef4444;
-      --card: #ffffff;
-      --border: #d1d5db;
-    }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      min-height: 100dvh;
-      background: var(--tg-bg);
-      color: var(--tg-text);
-      font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      display: grid;
-      place-items: center;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right)
-               env(safe-area-inset-bottom) env(safe-area-inset-left);
-    }
-    .card {
-      width: min(520px, 92vw);
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 22px 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.06);
-    }
-    .state {
-      display: flex; align-items: center; gap: 14px;
-      margin: 4px 0 10px;
-    }
-    .dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      background: var(--bad);
-    }
-    .ok  .dot { background: var(--ok); }
-    .bad .title { color: var(--bad); }
-    .title { font-size: 20px; font-weight: 700; margin: 0; }
-    .sub   { margin: 2px 0 0; opacity: .75; font-size: 13px; }
-    .hint  { margin-top: 12px; font-size: 12px; opacity: .6; }
-    .mono  { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  </style>
-</head>
-<body>
-  <div class="card state bad" id="box">
-    <div class="dot" aria-hidden="true"></div>
-    <div>
-      <p class="title" id="msg">Открыто вне Telegram</p>
-      <p class="sub mono" id="details">window.Telegram.WebApp не найден</p>
-      <p class="hint">Эта страница показывает зелёный OK, если загружена внутри Telegram Mini App.</p>
-    </div>
-  </div>
-
-  <noscript><div class="card"><b>Нужно включить JavaScript.</b></div></noscript>
-
-  <script>
-    (function () {
-      try {
-        const box = document.getElementById('box');
-        const msg = document.getElementById('msg');
-        const details = document.getElementById('details');
-
-        const tg = window.Telegram && window.Telegram.WebApp;
-        if (!tg) return; // обычный браузер — оставляем серую плашку
-
-        // применяем тему Telegram
-        const applyTheme = () => {
-          const p = tg.themeParams || {};
-          document.documentElement.style.setProperty('--tg-bg',  p.bg_color  || '#F3F4F6');
-          document.documentElement.style.setProperty('--tg-text', p.text_color || '#1F2937');
-          document.documentElement.style.setProperty('--card',    p.secondary_bg_color || '#FFFFFF');
-          document.documentElement.style.setProperty('--border',  p.hint_color || '#D1D5DB');
-        };
-        applyTheme();
-        tg.onEvent && tg.onEvent('themeChanged', applyTheme);
-
-        // сообщаем Telegram, что всё готово, и разворачиваем webview
-        tg.ready();
-        tg.expand();
-
-        // рисуем зелёный OK
-        box.classList.remove('bad');
-        box.classList.add('ok');
-        msg.textContent = 'OK';
-        const parts = [
-          `platform: ${tg.platform || 'unknown'}`,
-          `version: ${tg.version || '—'}`
-        ];
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-          const u = tg.initDataUnsafe.user;
-          parts.push(`user: ${u.username ? '@'+u.username : u.id}`);
-        }
-        details.textContent = parts.join(' • ');
-
-        // необязательно: кнопка «Готово» закрывает мини-апп
-        if (tg.MainButton) {
-          tg.MainButton.setText('Готово');
-          tg.MainButton.show();
-          tg.MainButton.onClick(() => tg.close());
-        }
-      } catch (e) {
-        const box = document.getElementById('box');
-        const msg = document.getElementById('msg');
-        const details = document.getElementById('details');
-        box.classList.add('bad');
-        msg.textContent = 'Ошибка';
-        details.textContent = String(e);
-        console.error(e);
+    <style>
+      :root{
+        /* Цвета подтягиваем из темы Telegram (ниже) */
+        --tg-bg:   #f3f4f6;
+        --tg-text: #1f2937;
       }
-    })();
-  </script>
-</body>
+      html, body, #root { height: 100%; }
+      body{
+        margin: 0;
+        min-height: 100dvh;
+        background: var(--tg-bg);
+        color: var(--tg-text);
+        font: 16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+        /* безопасные отступы под вырезы/клавишу-навигации */
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+                 env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <noscript>Нужно включить JavaScript</noscript>
+
+    <!-- Небольшой диагностический принтер ошибок: покажет крэши прямо в мини-аппе -->
+    <script>
+      (function () {
+        function showError(msg) {
+          const box = document.createElement('pre');
+          box.style.cssText =
+            'position:fixed;left:8px;right:8px;bottom:8px;max-height:45vh;overflow:auto;padding:10px;background:#fff3cd;border:1px solid #ffeeba;border-radius:8px;font:12px/1.4 ui-monospace,monospace;z-index:99999';
+          box.textContent = msg;
+          document.body.appendChild(box);
+        }
+        window.addEventListener('error', e =>
+          showError('JS error: ' + e.message)
+        );
+        window.addEventListener('unhandledrejection', e =>
+          showError(
+            'Promise rejection: ' +
+              (e.reason && (e.reason.stack || e.reason.message || e.reason))
+          )
+        );
+      })();
+    </script>
+
+    <!-- Инициализация Telegram WebApp (в обычном браузере просто ничего не делает) -->
+    <script>
+      (function () {
+        try {
+          const tg = window.Telegram && window.Telegram.WebApp;
+          if (!tg) return; // открыт как обычный сайт — идём дальше
+
+          // Применяем тему Telegram к CSS-переменным и <meta name="theme-color">
+          const themeMeta =
+            document.querySelector('meta[name="theme-color"]') ||
+            (() => {
+              const m = document.createElement('meta');
+              m.name = 'theme-color';
+              document.head.appendChild(m);
+              return m;
+            })();
+
+          const applyTheme = () => {
+            const p = tg.themeParams || {};
+            const bg  = p.bg_color   || '#F3F4F6';
+            const txt = p.text_color || '#1F2937';
+            document.documentElement.style.setProperty('--tg-bg', bg);
+            document.documentElement.style.setProperty('--tg-text', txt);
+            themeMeta.content = bg;
+          };
+          applyTheme();
+          tg.onEvent && tg.onEvent('themeChanged', applyTheme);
+
+          // Сообщаем, что готовы, и просим максимальную высоту
+          tg.ready();
+          tg.expand();
+
+          // (необязательно) системная кнопка «Назад» закрывает мини-апп
+          if (tg.BackButton) {
+            tg.BackButton.show();
+            tg.BackButton.onClick(() => tg.close());
+          }
+        } catch (e) {
+          console.error('TG init error:', e);
+        }
+      })();
+    </script>
+
+    <!-- Точка входа Vite/React -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
