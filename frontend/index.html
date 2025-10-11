@@ -15,50 +15,54 @@
 
     <script>
       (function () {
-        try {
-          const tg = window.Telegram && window.Telegram.WebApp;
-          if (!tg) return; // открыт как обычный сайт — всё ок, просто выходим
+        function initTG() {
+          try {
+            const tg = window.Telegram && window.Telegram.WebApp;
+            if (!tg) return; // открыто как обычный сайт — просто выходим
 
-          // Применяем тему до монтирования приложения
-          const applyTheme = () => {
-            const p = tg.themeParams || {};
-            document.documentElement.style.setProperty(
-              "--tg-bg",
-              p.bg_color || "#F3F4F6"
-            );
-            document.documentElement.style.setProperty(
-              "--tg-text",
-              p.text_color || "#1f2937"
-            );
-          };
-          applyTheme();
-          tg.onEvent && tg.onEvent("themeChanged", applyTheme);
+            // применяем тему до монтирования приложения
+            const applyTheme = () => {
+              const p = tg.themeParams || {};
+              const bg = p.bg_color || "#F3F4F6";
+              const text = p.text_color || "#111827";
+              document.documentElement.style.setProperty("--tg-bg", bg);
+              document.documentElement.style.setProperty("--tg-text", text);
+              // не обязательно, но помогает некоторым клиентам
+              try { tg.setBackgroundColor(bg); } catch (e) {}
+            };
+            applyTheme();
+            tg.onEvent && tg.onEvent("themeChanged", applyTheme);
 
-          // Сообщаем Телеге, что всё готово, и разворачиваем webview
-          tg.ready();
-          tg.expand();
+            // сообщаем Телеге и разворачиваем webview
+            tg.ready();
+            tg.expand();
 
-          // (необязательно) Кнопка «Назад» — закрывает мини-апп
-          if (tg.BackButton) {
-            tg.BackButton.show();
-            tg.BackButton.onClick(() => tg.close());
+            // (по желанию) кнопка Назад закрывает мини-апп
+            if (tg.BackButton) {
+              tg.BackButton.show();
+              tg.BackButton.onClick(() => tg.close());
+            }
+          } catch (e) {
+            console.error("TG init error:", e);
           }
-        } catch (e) {
-          console.error("TG init error:", e);
         }
+
+        // на всякий случай ждём полной загрузки, чтобы не было гонки с SDK
+        if (document.readyState === "complete") initTG();
+        else window.addEventListener("load", initTG);
       })();
     </script>
 
     <style>
-      /* Полотно под webview + безопасные зоны */
-      html,
-      body,
-      #root {
-        height: 100%;
+      /* полотно под webview + безопасные зоны */
+      html, body, #root { height: 100%; }
+      @supports (height: 100svh) {
+        html, body, #root { height: 100svh; } /* более точная высота во вьюпорте */
       }
       body {
         margin: 0;
-        background: var(--tg-bg, #f3f4f6);
+        background: var(--tg-bg, #F3F4F6);
+        color: var(--tg-text, #111827);
         min-height: 100dvh;
         padding-bottom: env(safe-area-inset-bottom);
       }
