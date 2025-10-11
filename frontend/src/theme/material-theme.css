@@ -1,0 +1,6 @@
+/* базовые стили + безопасная зона для Telegram WebView */
+html, body, #root { height:100%; margin:0; background:#F3F4F6; }
+body { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+@supports(padding:env(safe-area-inset-bottom)){
+  body{ padding-bottom:env(safe-area-inset-bottom); }
+}
