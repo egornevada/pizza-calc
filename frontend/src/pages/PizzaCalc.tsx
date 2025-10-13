@@ -65,7 +65,7 @@ export default function PizzaCalc({
       {/* === Ряд "Цена | Штук" — компонент сам применит grid и ширину qty */}
       <Box data-sc-row="price-qty">
         <TextField
-          label="Цена одной пиццы"
+          label="Цена за 1 шт."
           value={value.price}
           placeholder="₽"
           inputMode="decimal"
