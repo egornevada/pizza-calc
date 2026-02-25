@@ -1,11 +1,5 @@
-import { useMemo } from "react";
-import {
-  Box, Divider, FormControl, InputLabel, MenuItem, Select,
-  TextField, Typography, ToggleButton, ToggleButtonGroup,
-} from "@mui/material";
-import type { SelectChangeEvent } from "@mui/material/Select";
-import { alpha, useTheme } from "@mui/material/styles";
-
+import { useMemo, useState } from "react";
+import { TextField, Button } from "folder-ds";
 import SurfaceCard from "../components/SurfaceCard";
 import LocalPizzaOutlinedIcon from "@mui/icons-material/LocalPizzaOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -27,6 +21,7 @@ const sanitize = (s: string) => {
   const parts = t.split(".");
   return parts.length <= 2 ? t : `${parts[0]}.${parts.slice(1).join("")}`;
 };
+
 const toNum = (v: string | number) => {
   const n = typeof v === "number" ? v : parseFloat(v);
   return Number.isFinite(n) ? n : NaN;
@@ -35,7 +30,7 @@ const toNum = (v: string | number) => {
 export default function PizzaCalc({
   name, isBest, value, onChange, onRemove, sizeOptions = [25, 30, 35, 40],
 }: Props) {
-  const theme = useTheme();
+  const [qtyStr, setQtyStr] = useState(String(value.qty));
 
   const priceN = toNum(value.price);
   const diamN  = toNum(value.diameter);
@@ -48,90 +43,103 @@ export default function PizzaCalc({
     Number.isFinite(priceN) && Number.isFinite(areaOne) && priceN > 0 ? (100 / priceN) * areaOne : NaN
   ), [priceN, areaOne]);
 
-  const bestBg = alpha(theme.palette.secondary.main, 0.10);
-
   return (
     <SurfaceCard
       title={name}
       subtitle={isBest ? "Лучший выбор" : undefined}
-      leftAction={isBest ? <CheckCircleIcon fontSize="small" color="primary" /> : <LocalPizzaOutlinedIcon fontSize="small" color="disabled" />}
-      rightAction={<DeleteOutlineIcon onClick={onRemove} />}
-
-      radiusPx={24}
-      contentPaddingPx={16}
-      // всё оформление отдаем в компонент
-      colors={{ surface: isBest ? bestBg : undefined }}
+      leftAction={
+        isBest
+          ? <CheckCircleIcon fontSize="small" style={{ color: "var(--fg-brand)" }} />
+          : <LocalPizzaOutlinedIcon fontSize="small" style={{ color: "var(--fg-disabled)" }} />
+      }
+      rightAction={
+        <button
+          onClick={onRemove}
+          type="button"
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            padding: 4, display: "flex", alignItems: "center", color: "var(--fg-2)",
+          }}
+        >
+          <DeleteOutlineIcon fontSize="small" />
+        </button>
+      }
+      surfaceColor={isBest ? "var(--g-green-50)" : undefined}
     >
-      {/* === Ряд "Цена | Штук" — компонент сам применит grid и ширину qty */}
-      <Box data-sc-row="price-qty">
+      {/* Цена | Штук */}
+      <div className="price-qty-row">
         <TextField
           label="Цена за 1 шт."
           value={value.price}
           placeholder="₽"
           inputMode="decimal"
-          onChange={(e) => onChange({ price: sanitize(e.target.value) })}
+          onChange={(v) => onChange({ price: sanitize(v) })}
         />
-
-        <FormControl data-sc-qty>
-          <InputLabel id="qty-label">Штук</InputLabel>
-          <Select<number>
-            labelId="qty-label"
-            label="Штук"
-            value={value.qty}
-            onChange={(e: SelectChangeEvent<number>) => onChange({ qty: Number(e.target.value) })}
-          >
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((v) => (
-              <MenuItem key={v} value={v}>{v}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+        <TextField
+          label="Штук"
+          value={qtyStr}
+          inputMode="numeric"
+          onChange={(v) => {
+            const clean = v.replace(/\D/g, "");
+            setQtyStr(clean);
+            const n = parseInt(clean);
+            if (Number.isFinite(n) && n >= 1 && n <= 10) onChange({ qty: n });
+          }}
+          onBlur={() => {
+            const n = parseInt(qtyStr);
+            const clamped = Number.isFinite(n) && n >= 1 ? Math.min(10, n) : value.qty;
+            setQtyStr(String(clamped));
+            if (clamped !== value.qty) onChange({ qty: clamped });
+          }}
+        />
+      </div>
 
       {/* Диаметр */}
-      <Box sx={{ mt: 1.5 }}>
+      <div style={{ marginTop: 12 }}>
         <TextField
-          fullWidth
           label="Диаметр"
           value={value.diameter}
           placeholder="см"
           inputMode="decimal"
-          onChange={(e) => onChange({ diameter: sanitize(e.target.value) })}
+          onChange={(v) => onChange({ diameter: sanitize(v) })}
         />
-      </Box>
+      </div>
 
-      {/* Чипы — компонент сам сделает горизонтальный скролл и размеры */}
-      <Box data-sc-chips sx={{ mt: 1.25 }}>
-        <ToggleButtonGroup
-          exclusive
-          value={Number.isFinite(diamN) ? diamN : null}
-          onChange={(_, v: number | null) => v !== null && onChange({ diameter: String(v) })}
-        >
-          {sizeOptions.map((s) => (
-            <ToggleButton key={s} value={s} aria-label={`${s} см`}>
-              {s} см
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Box>
+      {/* Чипы */}
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginTop: 10, scrollbarWidth: "none" }}>
+        {sizeOptions.map((s) => (
+          <Button
+            key={s}
+            type="button"
+            priority={diamN === s ? "primary" : "inverted"}
+            tone="default"
+            size="S"
+            style={{ flexShrink: 0 }}
+            onClick={() => onChange({ diameter: String(s) })}
+          >
+            {s} см
+          </Button>
+        ))}
+      </div>
 
-      <Divider sx={{ my: 1.5 }} />
+      <hr className="divider" />
 
       {/* Итоги */}
-      <Box>
+      <div>
         <Stat label="Площадь одной:" value={Number.isFinite(areaOne) ? `${areaOne.toFixed(2)} см²` : "—"} />
         <Stat label="Площадь всего:" value={Number.isFinite(areaAll) ? `${areaAll.toFixed(2)} см²` : "—"} />
         <Stat label="₽ за 1 см²"     value={Number.isFinite(pricePerCm2) ? `${pricePerCm2.toFixed(2)} ₽` : "—"} />
         <Stat label="см² за 100₽"    value={Number.isFinite(cm2For100) ? `${cm2For100.toFixed(2)} см²` : "—"} />
-      </Box>
+      </div>
     </SurfaceCard>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <Box sx={{ display: "flex", gap: "8px", alignItems: "baseline", py: "4px" }}>
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>{label}</Typography>
-      <Typography variant="body2" fontWeight={700}>{value}</Typography>
-    </Box>
+    <div className="stat-row">
+      <span className="stat-label">{label}</span>
+      <span className="stat-value">{value}</span>
+    </div>
   );
 }

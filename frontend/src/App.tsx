@@ -1,20 +1,11 @@
 import { useMemo, useState } from "react";
-import { Box, Button, Container, Stack } from "@mui/material";
+import { Button } from "folder-ds";
 import AddCircleOutline from "@mui/icons-material/AddCircleOutline";
 import PizzaCalc, { type PizzaCardValue } from "./pages/PizzaCalc";
 
 type Item = { id: string; name: string; value: PizzaCardValue };
 
-// единственное авто-значение по умолчанию — qty = 1
 const initValue: PizzaCardValue = { price: "", qty: 1, diameter: "" };
-
-/** ширины */
-const CARD_MIN_WIDTH = 328;  // min ширина карточки
-const CARD_SCROLL_W = 360;  // ширина плитки в горизонтальной ленте (>= sm)
-const CARD_FULL_MAX = 600;  // max ширина карточки на xs
-
-/** один «шаг» = 16 px */
-const GAP = 2; // theme.spacing(2) = 16px
 
 export default function App() {
   const [items, setItems] = useState<Item[]>([
@@ -22,7 +13,6 @@ export default function App() {
     { id: rid(), name: "Вариант 2", value: initValue },
   ]);
 
-  // цена за см²
   const perCm2 = useMemo(() => {
     return items.map(({ value }) => {
       const price = parseFloat(String(value.price));
@@ -33,7 +23,6 @@ export default function App() {
     });
   }, [items]);
 
-  // лучший вариант
   const bestIndex = useMemo(() => {
     let idx = -1, best = Infinity;
     perCm2.forEach((v, i) => { if (Number.isFinite(v) && v < best) { best = v; idx = i; } });
@@ -43,7 +32,7 @@ export default function App() {
   const addItem = () => setItems((xs) => [...xs, { id: rid(), name: `Вариант ${xs.length + 1}`, value: initValue }]);
   const removeItem = (id: string) =>
     setItems((xs) => {
-      if (xs.length <= 1) return xs; // не позволяем удалить последнюю карточку
+      if (xs.length <= 1) return xs;
       const next = xs.filter((x) => x.id !== id);
       return next.map((x, i) => ({ ...x, name: `Вариант ${i + 1}` }));
     });
@@ -51,106 +40,34 @@ export default function App() {
     setItems((xs) => xs.map((x) => (x.id === id ? { ...x, value: { ...x.value, ...patch } } : x)));
 
   return (
-    <Box sx={{ minHeight: "100svh", bgcolor: "background.default", py: GAP }}>
-      {/* полноширинный контейнер; гаттеры вернём локально */}
-      <Container maxWidth={false} disableGutters>
-        {/* расстояние между лентой и кнопкой = 16px */}
-        <Stack spacing={GAP}>
-          {/* === ЛЕНТА КАРТОЧЕК === */}
-          <Box
-            sx={(t) => ({
-              display: "flex",
-              flexDirection: "column",
-              rowGap: t.spacing(GAP),  // вертикальные интервалы между карточками на xs = 16px
-              px: GAP,                 // по 16px слева/справа
+    <div className="app-root">
+      <div className="app-stack">
+        <div className="card-strip">
+          {items.map((it, i) => (
+            <div key={it.id} className="card-wrap">
+              <PizzaCalc
+                name={it.name}
+                isBest={i === bestIndex}
+                value={it.value}
+                onChange={(p) => patchItem(it.id, p)}
+                onRemove={() => { if (items.length > 1) removeItem(it.id); }}
+              />
+            </div>
+          ))}
+        </div>
 
-              [t.breakpoints.up("sm")]: {
-                flexDirection: "row",
-                flexWrap: "nowrap",
-                overflowX: "auto",
-                overflowY: "visible",
-                columnGap: t.spacing(GAP), // горизонтальные интервалы между карточками = 16px
-                px: GAP,                   // 16px слева/справа
-                pt: 1,
-                pb: 2,
-                mb: "-8px",
-
-                // скрыть полосу прокрутки, скролл оставить
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-                "&::-webkit-scrollbar": { display: "none", height: 0 },
-                WebkitOverflowScrolling: "touch",
-                overscrollBehaviorX: "contain",
-              },
-            })}
+        <div className="add-btn-wrap">
+          <Button
+            onClick={addItem}
+            priority="primary"
+            leftIcon={<AddCircleOutline />}
+            style={{ width: "100%" }}
           >
-            {items.map((it, i) => (
-              // обёртка управляет шириной плитки
-              <Box
-                key={it.id}
-                sx={(t) => ({
-                  // xs: тянемся, но в диапазоне [328..600]
-                  width: "100%",
-                  minWidth: `${CARD_MIN_WIDTH}px`,
-                  maxWidth: `${CARD_FULL_MAX}px`,
-
-                  // sm+: фикс-плитка 360
-                  [t.breakpoints.up("sm")]: {
-                    flex: "0 0 auto",
-                    width: `${CARD_SCROLL_W}px`,
-                    minWidth: `${CARD_SCROLL_W}px`,
-                    maxWidth: `${CARD_SCROLL_W}px`,
-                  },
-                })}
-              >
-                <PizzaCalc
-                  name={it.name}
-                  isBest={i === bestIndex}
-                  value={it.value}
-                  onChange={(p) => patchItem(it.id, p)}
-                  onRemove={() => { if (items.length > 1) removeItem(it.id); }}
-                />
-              </Box>
-            ))}
-          </Box>
-
-          {/* === КНОПКА СНИЗУ === */}
-          <Box
-            sx={{
-              width: "100%",
-              display: "flex",
-              justifyContent: { xs: "center", sm: "flex-start" },
-              px: { xs: GAP, sm: GAP },  // по 16px слева/справа
-            }}
-          >
-            <Button
-              onClick={addItem}
-              variant="contained"
-              startIcon={<AddCircleOutline />}
-
-              // ← инлайн-style выигрывает у любых CSS с !important
-              style={{ borderRadius: 12 }}
-
-              // а sx оставим на случай, если style потом убёшь
-              sx={(t) => ({
-                borderRadius: "12px !important",
-                height: 44,
-                textTransform: "none",
-                width: "100%",
-                maxWidth: "600px",
-                [t.breakpoints.up("sm")]: {
-                  width: "360px",
-                  minWidth: "360px",
-                  maxWidth: "360px",
-                },
-              })}
-            >
-              Добавить вариант
-            </Button>
-          </Box>
-        </Stack>
-      </Container>
-    </Box>
+            Добавить вариант
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

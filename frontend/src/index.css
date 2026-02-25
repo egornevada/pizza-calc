@@ -1,1 +1,104 @@
 html, body, #root { height: 100%; margin: 0; }
+
+/* ===== App layout ===== */
+.app-root {
+  min-height: 100svh;
+  background: var(--bg-1);
+  padding: 16px 0;
+}
+
+.app-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 16px;
+}
+
+@media (min-width: 600px) {
+  .card-strip {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 8px 16px 16px;
+    margin-bottom: -8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .card-strip::-webkit-scrollbar { display: none; height: 0; }
+}
+
+.card-wrap {
+  width: 100%;
+  min-width: 328px;
+  max-width: 600px;
+}
+
+@media (min-width: 600px) {
+  .card-wrap {
+    flex: 0 0 auto;
+    width: 360px;
+    min-width: 360px;
+    max-width: 360px;
+  }
+}
+
+.add-btn-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+@media (min-width: 600px) {
+  .add-btn-wrap {
+    justify-content: flex-start;
+  }
+}
+
+/* ===== PizzaCalc inner layout ===== */
+.price-qty-row {
+  display: grid;
+  grid-template-columns: 1fr 96px;
+  column-gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 600px) {
+  .price-qty-row {
+    grid-template-columns: 1fr 140px;
+  }
+}
+
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--stroke-1);
+  margin: 12px 0;
+}
+
+.stat-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 0;
+}
+
+.stat-label {
+  color: var(--fg-2);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+}
