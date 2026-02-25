@@ -23,7 +23,6 @@ export default function SurfaceCard({
       overflow: "hidden",
       border: "1px solid var(--stroke-1)",
       boxShadow: "var(--shadow-card)",
-      minWidth: 328,
     }}>
       {/* Header */}
       <div style={{
